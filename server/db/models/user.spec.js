@@ -10,6 +10,8 @@ describe('User model', () => {
     'SequelizeUniqueConstraintError'
   ];
 
+  afterAll(() => db.close());
+
   beforeEach(() => {
     return db.sync({ force: true });
   });
