@@ -15,7 +15,6 @@ process.on('unhandledRejection', err => {
 // Ensure environment variables are read.
 require('../config/env');
 
-
 const jest = require('jest');
 const execSync = require('child_process').execSync;
 let argv = process.argv.slice(2);
@@ -38,6 +37,9 @@ function isInMercurialRepository() {
   }
 }
 
+// Hook to make sure promises are resolving correctly
+argv.push('--detectOpenHandles');
+
 // Watch unless on CI, in coverage mode, or explicitly running all tests
 if (
   !process.env.CI &&
@@ -48,6 +50,5 @@ if (
   const hasSourceControl = isInGitRepository() || isInMercurialRepository();
   argv.push(hasSourceControl ? '--watch' : '--watchAll');
 }
-
 
 jest.run(argv);
