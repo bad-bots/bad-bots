@@ -1,0 +1,28 @@
+language: node_js
+node_js:
+  - node # uses most recent stable node version
+cache: npm # cache installed npm packages for faster build times.
+services:
+  - postgresql # starts up postgres
+addons:
+  postgresql: '9.6' # highest available postgres version on Travis
+dist: trusty # uses trusty environment
+sudo: false # when on trusty, uses Docker containers for speed
+notifications:
+  email:
+    on_success: change # default: change (only when going from broken to fixed)
+    on_failure: always # default: always (which is annoying, as it should be)
+install:
+  - npm ci # faster, goes only from package-lock
+before_script:
+  - psql -c 'create database "bad-bots-test";' -U postgres # remember to change this name if you change it elsewhere (e.g. package.json)
+
+# before_deploy:
+#   - npm run build-client # make the bundle
+#   - rm -rf node_modules # omit from the tarball, since we skip cleanup
+# deploy:
+#   skip_cleanup: true # prevents travis from deleting the build
+#   provider: heroku
+#   app: real-fake-spaceshop
+#   api_key:
+#     secure: 'LA/XklA/ur3Sjzd+94XMX6T5FbjGJOh5/t6ie5IRMHd4GRJOFNBiVgKo+MipgGVuKLgxIhSDfafvpWDS01Vx2vtxpKhPnIYhBwRnhEq8I1OKaJBH9y+rc3CVlvinP1nGAT/U8TJiBpXaANcQ5vkHYHWMDBDCtJ8nRPo/J9b+iDx/lIBmkCRAsjl4lx8x4lfQ/guKYlmgspNXGaGKhG357hqe7yOJH0vsWMEnhLbXFG5zdFFIUYvE/2/Yfh373Fa2Fdzgwb6cNug02P1AiDkHgxefmg2Svgb2789ruxomqBwLngrByyC/Fi+RcAYHDfeD2s7fFTOfG/GJQ0sBA0g8HTiyppgVqmpL3zDG6bTADMUlvwYWJHZ4p+dRWmxgsdlCmZKgk+Y2wdckmyBIviYVF8hVnIqd48SGeDvQbMzKdjuWOj7TegvJpkT5L1UmzJELcScHZGDHogHrRjvDHqzbAG93/wKcyNRlZK1gJysa/8xClbdwy4nee8z/LjS/iLVInILDit1MA9rTUj41v/NFtk79kCM47ELl80d6Nd/11UzUpnizLRXhvPjClvTaeurG4aJz2yP/XQlB4AL9qCBP4sUIhiUW6enYcm/jtgNFifykHCifhGJWYsXku2HtmGNJXSIR0WSqsXB/CdoJ++LDdyEJhZEoJIUTMx7jWsG+1lY='
