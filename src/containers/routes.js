@@ -1,16 +1,16 @@
 import React from 'react';
-import { Switch, Route } from 'react-router-dom';
-import { ProtectedRoute, UnprotectedRoute } from './Wrappers';
+import { Switch } from 'react-router-dom';
+import { UnprotectedRoute } from './Wrappers';
 import { Login, Register } from './index';
 
 const Routes = () => {
   return (
-    <Switch>
+    <React.Fragment>
       <Switch>
-        <UnprotectedRoute path="/login" component={Login} />
-        <UnprotectedRoute path="/register" component={Register} />
+        <UnprotectedRoute exact path="/login" component={Login} />
+        <UnprotectedRoute exact path="/register" component={Register} />
       </Switch>
-    </Switch>
+    </React.Fragment>
   );
 };
 

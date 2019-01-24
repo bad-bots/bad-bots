@@ -17,7 +17,7 @@ export const loginUser = data => {
   return dispatch => {
     dispatch(resolveLoginError());
 
-    return fetch('/api/auth/login', {
+    return fetch('/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

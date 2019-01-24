@@ -3,7 +3,8 @@
 import { createStructuredSelector } from 'reselect';
 import { connect } from 'react-redux';
 import React from 'react';
-
+import { withRouter } from 'react-router-dom';
+import { compose } from 'redux';
 import { ContentLoading } from '../components/Pages';
 
 export function LoaderFn(dataName, loaderFn, dataLoaded) {
@@ -29,9 +30,14 @@ const dataLoader = loaders => WrappedComponent => {
     }, {});
   };
 
-  return connect(
+  const withConnect = connect(
     mapStateToProps,
     mapDispatchToProps
+  );
+
+  return compose(
+    withConnect,
+    withRouter
   )(
     class DataLoader extends React.PureComponent {
       constructor(props) {
@@ -66,6 +72,8 @@ const dataLoader = loaders => WrappedComponent => {
 
         if (dataLoaded && this.state.loading) {
           this.setState({ loading: false });
+        } else {
+          this.loadData();
         }
       }
 
