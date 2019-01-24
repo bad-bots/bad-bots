@@ -3,7 +3,7 @@
 const db = require('../index');
 const User = db.model('user');
 
-xdescribe('User model', () => {
+describe('User model', () => {
   let user;
   const sequelizeErrors = [
     'SequelizeValidationError',
@@ -27,28 +27,28 @@ xdescribe('User model', () => {
     describe('correctPassword', () => {
       it('should auto generate salt', async function() {
         await user.save();
-        expect(typeof user.salt()).to.be.equal('string');
+        expect(typeof user.salt()).toBe('string');
       });
 
       it('should return true if the password is correct', async function() {
         await user.save();
         const valid = await user.validPassword('password');
-        expect(valid).to.be.equal(true);
+        expect(valid).toBe(true);
       });
 
       it('should return false if the password is incorrect', async function() {
         await user.save();
         const valid = await user.validPassword('bonez');
-        expect(valid).to.be.equal(false);
+        expect(valid).toBe(false);
       });
 
       it('should encrypt password', async function() {
         const unEncryptedPass = user.password;
         await user.save();
-        expect(user.password()).not.to.be.equal(unEncryptedPass);
+        expect(user.password()).not.toBe(unEncryptedPass);
         user.password = 'newPassword';
         await user.save();
-        expect(user.password()).not.to.be.equal('newPassword');
+        expect(user.password()).not.toBe('newPassword');
       });
     }); // end describe('correctPassword')
     describe('correctEmail', () => {
@@ -62,7 +62,7 @@ xdescribe('User model', () => {
               await user.validate();
               throw new Error(`should not save invalid email: ${email}`);
             } catch (err) {
-              expect(sequelizeErrors).to.contain(err.name);
+              expect(sequelizeErrors).toContain(err.name);
             }
           })
         );
@@ -78,7 +78,7 @@ xdescribe('User model', () => {
           });
           throw new Error('should not save user with existing email');
         } catch (err) {
-          expect(sequelizeErrors).to.contain(err.name);
+          expect(sequelizeErrors).toContain(err.name);
         }
       });
     }); // end describe('correctEmail')
@@ -94,7 +94,7 @@ xdescribe('User model', () => {
                 `should not save user with invalid name: ${name}`
               );
             } catch (err) {
-              expect(sequelizeErrors).to.contain(err.name);
+              expect(sequelizeErrors).toContain(err.name);
             }
           })
         );
@@ -104,8 +104,8 @@ xdescribe('User model', () => {
         user.lastName = 'name';
         await user.save();
 
-        expect(user.firstName).to.be.equal('Valid');
-        expect(user.lastName).to.be.equal('Name');
+        expect(user.firstName).toBe('Valid');
+        expect(user.lastName).toBe('Name');
       });
       it('should not save invalid last name', function() {
         const invalidNames = [null, undefined, ''];
@@ -119,7 +119,7 @@ xdescribe('User model', () => {
                 `should not save user with invalid name: ${name}`
               );
             } catch (err) {
-              expect(sequelizeErrors).to.contain(err.name);
+              expect(sequelizeErrors).toContain(err.name);
             }
           })
         );
