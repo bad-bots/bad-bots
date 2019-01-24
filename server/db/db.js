@@ -9,6 +9,7 @@ const databaseName =
 const databaseUrl =
   (process.env.DATABASE_URL || 'postgres://localhost/') + databaseName;
 
+
 const db = new Sequelize(databaseUrl, {
   logging: false
 });
