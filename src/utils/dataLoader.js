@@ -13,7 +13,7 @@ export function LoaderFn(dataName, loaderFn, dataLoaded) {
   this.dataLoaded = dataLoaded;
 }
 
-const dataLoader = loaders => WrappedComponent => {
+const dataLoader = (loaders, options) => WrappedComponent => {
   // Holds selectors that check if data has loaded
   const selectors = loaders.reduce((map, loader) => {
     map[loader.dataName + 'Loaded'] = loader.dataLoaded();
@@ -43,7 +43,9 @@ const dataLoader = loaders => WrappedComponent => {
       constructor(props) {
         super(props);
         this.state = {
-          loading: !this.dataHasLoaded()
+          loading: !this.dataHasLoaded(),
+          // Don't loadData on componentDidUpdate
+          ignoreDidUpdate: options ? !!options.ignoreDidUpdate : false
         };
       }
 
@@ -59,7 +61,7 @@ const dataLoader = loaders => WrappedComponent => {
           .every(dataLoad => dataLoad);
 
         if (dataLoaded && this.state.loading) {
-          this.setState({ loading: false });
+          this.unsetLoading();
         } else {
           this.loadData();
         }
@@ -70,11 +72,17 @@ const dataLoader = loaders => WrappedComponent => {
           .map(loader => this.props[loader.dataName + 'Loaded'])
           .every(dataLoad => dataLoad);
 
-        if (dataLoaded && this.state.loading) {
-          this.setState({ loading: false });
+        if (this.state.ignoreDidUpdate) {
+          this.unsetLoading();
+        } else if (dataLoaded && this.state.loading) {
+          this.unsetLoading();
         } else {
           this.loadData();
         }
+      }
+
+      unsetLoading() {
+        this.setState(state => ({ ...state, loading: false }));
       }
 
       loadData() {
@@ -88,7 +96,7 @@ const dataLoader = loaders => WrappedComponent => {
         });
 
         this.executeLoaders(dataLoaders).then(() => {
-          this.setState({ loading: false });
+          this.unsetLoading();
         });
       }
 

@@ -18,7 +18,6 @@ import './Toolbar.css';
 
 const AppToolbar = props => {
   const { classes } = props;
-  console.log('user', props.user);
   return (
     <React.Fragment>
       <AppBar position="fixed" className={classes.appBar} color="default">
