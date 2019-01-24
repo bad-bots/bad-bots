@@ -3,7 +3,7 @@
 const db = require('../index');
 const User = db.model('user');
 
-describe('User model', () => {
+xdescribe('User model', () => {
   let user;
   const sequelizeErrors = [
     'SequelizeValidationError',
