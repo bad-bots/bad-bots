@@ -22,6 +22,6 @@ const App = () => {
 
 const loaders = [new LoaderFn('currentUser', getUser, makeSelectUserLoaded)];
 
-const withData = dataLoader(loaders);
+const withData = dataLoader(loaders, { ignoreDidUpdate: true });
 
 export default withData(App);

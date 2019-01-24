@@ -9,10 +9,11 @@
 }
 
 .user {
-  text-transform: none
+  text-transform: none;
+  margin-left: 5px !important;
 }
 
-@media(max-width: 600px) {
+@media (max-width: 600px) {
   .user {
     display: none !important;
   }

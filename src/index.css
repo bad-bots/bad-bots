@@ -19,6 +19,13 @@ code {
     monospace;
 }
 
+.vertical-divider {
+  height: 48px;
+  width: 1px;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  margin: 0 12px;
+}
+
 .error-snackbar-content {
   background-color: orangered !important;
 }
@@ -53,7 +60,7 @@ code {
 
 .auth-logo {
   width: 128px;
-  margin: 16px auto;
+  margin: 8px auto;
 }
 
 .auth-title {

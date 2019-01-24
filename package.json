@@ -85,9 +85,11 @@
     "start": "npm run client & npm run server",
     "client": "node scripts/start.js",
     "server": "NODE_ENV=development nodemon server",
+    "seed": "NODE_ENV=development node scripts/seed.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js"
   },
+  "proxy": "http://localhost:8080",
   "eslintConfig": {
     "extends": "react-app"
   },
@@ -107,8 +109,8 @@
       "react-app-polyfill/jsdom"
     ],
     "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
+      "<rootDir>/(src|server)/**/__tests__/**/*.{js,jsx,ts,tsx}",
+      "<rootDir>/(src|server)/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
     ],
     "testEnvironment": "jsdom",
     "testURL": "http://localhost",

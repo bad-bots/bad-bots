@@ -18,6 +18,7 @@ const styles = theme => ({
       fontSize: '0.7em'
     }
   },
+  toolbar: { ...theme.mixins.toolbar },
   toolbarContent: {
     flexGrow: 1,
     margin: '0 20px'
