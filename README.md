@@ -1,3 +1,7 @@
+# Bad Bots
+
+[![Build Status](https://travis-ci.org/bad-bots/bad-bots.svg?branch=master)](https://travis-ci.org/bad-bots/bad-bots)
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
