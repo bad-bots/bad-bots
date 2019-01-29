@@ -51,7 +51,7 @@ const Unit = inMemDb.addCollection('units');
 
 
 // Add room and player1 to db
-class inMemDb {
+class db {
     
     initGameRoom(roomId, p1SocketId, p1PhonePosition) {
         const player1 = Player.insert({
@@ -135,4 +135,4 @@ class inMemDb {
     }
 
 }
-module.exports = inMemDb
+module.exports = db

@@ -3,7 +3,7 @@ const db = require('./db');
 const sessionsStore = require('./sessionsStore');
 const socketio = require('socket.io');
 
-const PORT = process.env.SERVER_PORT;
+const PORT = process.env.SERVER_PORT || 8080;
 
 db.authenticate()
   .then(() => {
