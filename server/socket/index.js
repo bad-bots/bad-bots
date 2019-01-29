@@ -1,4 +1,4 @@
-const memDb = require('../db/inMemoryDb');
+const gameState = require('../db/inMemoryDb');
 
 module.exports = io => {
   io.on('connection', socket => {
@@ -13,9 +13,26 @@ module.exports = io => {
       io.emit('test')
     })
 
-    socket.on('start', room => {
-      socket.join(room)
-      memDb.initGameRoom(room, socket.id, [1,1,1]) // 3rd argument is phone location
+    socket.on('init', roomName => {
+      socket.join(roomName);
+      const gameRoom = gameState.initGameRoom(roomName);
+      gameState.addPlayerOne(gameRoom, socket.id, [1,1,1]);
+      console.log(`Client ${socket.id} has started room "${roomName}"`);
+    })
+
+    socket.on('start', joinToken => {
+      const gameRoom = gameState.getRoomByToken(joinToken.toString());
+      if (!gameRoom){
+        socket.emit('incorrectGameToken')
+        return
+      }
+      gameState.addPlayerTwo(gameRoom, socket.id, [1,1,1]);
+      gameState.startGame(gameRoom);
+      console.log(`Client ${socket.id} has joined game. Game has started.`);
+    })
+
+    socket.on('spawn', (unitType, playerNo) => {
+      const gameRoom = gameState.getRoom();
     })
 
   })
