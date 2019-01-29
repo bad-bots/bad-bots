@@ -1,5 +1,5 @@
 {
-  "name": "bad-bots",
+  "name": "bad-botz",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -8,6 +8,8 @@
     "connect-session-sequelize": "^6.0.0",
     "connected-react-router": "^6.2.2",
     "cookie-parser": "^1.4.3",
+    "cors": "^2.8.5",
+    "cross-env": "^5.2.0",
     "dotenv": "6.0.0",
     "dotenv-expand": "4.2.0",
     "express-session": "^1.15.6",
@@ -23,6 +25,7 @@
     "jest-pnp-resolver": "1.0.1",
     "jest-resolve": "23.6.0",
     "loadable-components": "^2.2.3",
+    "lokijs": "^1.5.6",
     "mini-css-extract-plugin": "0.4.3",
     "morgan": "^1.9.1",
     "nodemailer": "^5.1.1",
@@ -84,12 +87,11 @@
   "scripts": {
     "start": "npm run client & npm run server",
     "client": "node scripts/start.js",
-    "server": "NODE_ENV=development nodemon server",
-    "seed": "NODE_ENV=development node scripts/seed.js",
+    "server": "cross-env NODE_ENV=development nodemon server",
+    "seed": "cross-env NODE_ENV=development node scripts/seed.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js"
   },
-  "proxy": "http://localhost:8080",
   "eslintConfig": {
     "extends": "react-app"
   },

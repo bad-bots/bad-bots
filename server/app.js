@@ -2,6 +2,7 @@ require('../config/env');
 const express = require('express');
 const logger = require('morgan');
 const path = require('path');
+const cors = require('cors')
 const compression = require('compression');
 const sessions = require('express-session');
 const passport = require('passport');
@@ -37,6 +38,7 @@ const createApp = () => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
+  app.use(cors());
 
   // compression middleware
   app.use(compression());

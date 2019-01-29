@@ -17,7 +17,7 @@ export const registerUser = data => {
   return dispatch => {
     dispatch(resolveRegistrationError());
 
-    fetch('/auth/register', {
+    fetch(process.env.REACT_APP_SERVER_URL + 'auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -22,7 +22,7 @@ export const resourceLoadingComplete = () => ({
 
 /* Thunk creators */
 export const getUser = () => dispatch => {
-  return fetch('/auth/me')
+  return fetch(process.env.REACT_APP_SERVER_URL + 'auth/me')
     .then(response => response.json())
     .then(result => {
       if (!result.error) {
@@ -37,7 +37,7 @@ export const getUser = () => dispatch => {
 };
 
 export const logout = () => dispatch => {
-  return fetch('/auth/logout', { method: 'POST' })
+  return fetch(process.env.REACT_APP_SERVER_URL + 'auth/logout', { method: 'POST' })
     .then(response => {
       return response.json();
     })
