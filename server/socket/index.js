@@ -1,3 +1,5 @@
+const memDb = require('../db/inMemoryDb');
+
 module.exports = io => {
   io.on('connection', socket => {
     console.log(`A socket connection to npm server has been made: ${socket.id}`)
@@ -11,8 +13,10 @@ module.exports = io => {
       io.emit('test')
     })
 
-    socket.on('join', room => {
+    socket.on('start', room => {
       socket.join(room)
+      memDb.initGameRoom(room, socket.id, [1,1,1]) // 3rd argument is phone location
     })
+
   })
 }
