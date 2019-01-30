@@ -15,8 +15,12 @@ module.exports = io => {
       io.emit("test");
     });
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
     socket.on('init', roomName => {
+=======
+    socket.on('init', (roomName, ack) => {
+>>>>>>> Stashed changes
       socket.join('room:' + roomName);
 =======
     socket.on("init", (roomName, ack) => {
@@ -26,6 +30,7 @@ module.exports = io => {
       gameState.addPlayerOne(gameRoom, socket.id, [1, 1, 1]);
       ack(gameRoom.joinToken);
       console.log(`Client ${socket.id} has started room "${roomName}"`);
+<<<<<<< Updated upstream
     });
 
     socket.on("start", joinToken => {
@@ -33,6 +38,17 @@ module.exports = io => {
       if (!gameRoom) {
         socket.emit("incorrectGameToken");
         return;
+=======
+      ack(gameRoom.joinToken);
+    })
+
+    socket.on('start', joinToken => {
+      console.log(`P2 attemping to join room with token ${joinToken}`);
+      const gameRoom = gameState.getRoomByToken(joinToken);
+      if (!gameRoom){
+        socket.emit('incorrectGameToken')
+        return
+>>>>>>> Stashed changes
       }
       socket.join(gameRoom.roomName);
       gameState.addPlayerTwo(gameRoom, socket.id, [1, 1, 1]);
