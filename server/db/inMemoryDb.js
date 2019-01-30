@@ -45,78 +45,71 @@ const inMemDb = new loki('games.json');
  * }, {})
  */
 
-const Player = inMemDb.addCollection('player')
-const Room = inMemDb.addCollection('rooms');
-const Unit = inMemDb.addCollection('units');
 
 
 // Add room and player1 to db
-class db {
+class MemDB {
     
-    initGameRoom(roomId, p1SocketId, p1PhonePosition) {
-        const player1 = Player.insert({
-            socketId: p1SocketId,
-            castleHealth: 1000,
-            doubloons: 10000,
-            phonePosition: p1PhonePosition,
-            coolDowns: {
-            unitType: 0
-            }
-        })
+    constructor() {
+        this.Player = inMemDb.addCollection('player')
+        this.Room = inMemDb.addCollection('rooms');
+        this.Unit = inMemDb.addCollection('units');
+    }
 
-        return Room.insert({
-            joinToken: (Room.count() + 1).toString(), // May fail for Asyc operations.
-            player1,
+    initGameRoom(roomName, p1SocketId, p1PhonePosition) {
+        return this.Room.insert({
+            joinToken: (this.Room.count() + 1).toString(), // May fail for Asyc operations.
+            player1: null,
             player2: null,
-            roomId,
+            roomName,
             gameStatus: 'pending',
             units: null
         })
     }
 
+    getRoomByToken(joinToken) {
+        return this.Room.findOne({joinToken})
+    }
+
+    addPlayer(playerNo, room, socketId, phonePosition) {
+        const player = this.Player.insert({
+                socketId,
+                castleHealth: 1000,
+                doubloons: 10000,
+                phonePosition,
+                coolDowns: {
+                unitType: 0
+                }
+        });
+        room[playerNo] = player;
+    }
+
+    addPlayerOne(room, socketId, phonePosition) {
+        this.addPlayer('player1', room, socketId, phonePosition)
+    }
+
+    addPlayerTwo(room, socketId, phonePosition) {
+        this.addPlayer('player2', room, socketId, phonePosition)
+    }
+
     // Add p2 to db and update game status
-    startGame(joinToken, p2SocketId, p2PhonePosition) {
-        const player2 = Player.insert({
-            socketId: p2SocketId,
-            castleHealth: 1000,
-            doubloons: 10000,
-            phonePosition: p2PhonePosition,
-            coolDowns: {
-            unitType: 0
-            }
-        })
-
-        return Room.findAndUpdate({joinToken}, docs => {
-            // Expecting only 1
-            docs[0].player2 = player2
-            docs[0].gameStatus = 'inPlay'
-        })
-
+    startGame(gameRoom) {
+        gameRoom.gameStatus = 'inPlay'
     }
 
-    pauseGame(roomId) {
-        Room.findAndUpdate({roomId}, docs => {
-            // Expecting only 1
-            docs[0].gameStatus = 'paused'
-        })
+    pauseGame(gameRoom) {
+        gameRoom.gameStatus = 'paused'
     }
 
-    playGame(roomId) {
-        Room.findAndUpdate({roomId}, docs => {
-            // Expecting only 1
-            docs[0].gameStatus = 'inPlay'
-        })
-    }
-
-    destroyGame(roomId) {
-        Room.findAndRemove({roomId})
+    destroyGame(roomName) {
+        this.Room.findAndRemove({roomName})
     }
 
 
     spawnUnit(roomId, playerId, unitType, position) {
-        const room = Room.findOne({roomId})
+        const room = this.Room.findOne({roomId})
         if (room) {
-            const unit = Unit.insert({
+            const unit = this.Unit.insert({
                 health: 100,
                 position,
                 unitType,
@@ -129,10 +122,13 @@ class db {
     }
 
     updateUnit(data) {
-        const unit = Unit.findAndUpdate({
+        const unit = this.Unit.findAndUpdate({
 
         })
     }
 
 }
+
+const db = new MemDB();
+
 module.exports = db
