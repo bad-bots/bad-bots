@@ -103,7 +103,7 @@ class MemDB {
                 doubloons: 10000,
                 phonePosition,
                 coolDowns: {
-                unitType: 0
+                 knight: 0
                 }
         });
         room[playerNo] = player;
@@ -148,13 +148,13 @@ class MemDB {
     unitCost(type) {
         switch (type) {
             case 'archer':
-                return 1000
-            case 'infantry':
-                return 1500
+                return 10
+            case 'knight':
+                return 15
             case 'spearman':
-                return 2000
+                return 20
             default:
-                return null
+                return 10
         }
     }
 

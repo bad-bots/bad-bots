@@ -17,8 +17,8 @@ module.exports = io => {
       socket.join('room:' + roomName);
       const gameRoom = gameState.initGameRoom(roomName);
       gameState.addPlayerOne(gameRoom, socket.id, [1,1,1]);
-      console.log(`Client ${socket.id} has started room "${roomName}"`);
       ack(gameRoom.joinToken);
+      console.log(`Client ${socket.id} has started room "${roomName}"`);
     })
 
     socket.on('start', joinToken => {
@@ -30,16 +30,14 @@ module.exports = io => {
       }
       gameState.addPlayerTwo(gameRoom, socket.id, [1,1,1]);
       gameState.startGame(gameRoom);
+
+      io.to(gameRoom.player1.socketId).emit(gameRoom.player1)
+
+      io.to(gameRoom.player2.socketId).emit(gameRoom.player2)
+
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
     // e7a7n5ot4
-
-    // Old implementation
-    socket.on('spawn unit', data => {
-      console.log(data)
-      const unit = gameState.createUnit(data.unitType, data.position, data.rotation, socket.id);
-      socket.emit('spawn unit', unit)
-    })
 
     // New implementation
     socket.on('spawn', (unitType, position, rotation) => {
@@ -62,7 +60,10 @@ module.exports = io => {
         const unit = gameState.createUnit(unitType, position, rotation, socket.id);
         player.doubloons -= cost;
         gameRoom.push(unit)
+
         socket.emit('unit', unit)
+        socket.emit('updatePlayerState', player);
+
       } else {
         socket.emit('insufficientDoubloons');
       }
