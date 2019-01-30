@@ -22,6 +22,7 @@ const inMemDb = new loki('games.json');
  *          id: 1
  *          health: 100,
  *          position: [1,12,3],
+ *          rotation: [0,0,0].
  *          playerId: 1,
  *          unitType: 'archer',
  *          spawnTime: 100000
@@ -47,28 +48,52 @@ const inMemDb = new loki('games.json');
 
 
 
-// Add room and player1 to db
+
 class MemDB {
     
     constructor() {
         this.Player = inMemDb.addCollection('player')
         this.Room = inMemDb.addCollection('rooms');
         this.Unit = inMemDb.addCollection('units');
+        this.JoinToken = inMemDb.addCollection('joinTokens');
+    }
+
+    genJoinToken(roomName) {
+        let joinToken;
+        while (!joinToken) {
+            const temp = Math.random().toString(36).substring(4);
+            const tokenFound = this.JoinToken.findOne({token: temp})
+            if (!tokenFound) {
+                joinToken = temp;
+            }
+        }
+        this.JoinToken.insert({token: joinToken, roomName})
+        return joinToken
     }
 
     initGameRoom(roomName, p1SocketId, p1PhonePosition) {
+        const joinToken = this.genJoinToken(roomName);
+
         return this.Room.insert({
-            joinToken: (this.Room.count() + 1).toString(), // May fail for Asyc operations.
+            joinToken,
             player1: null,
             player2: null,
             roomName,
             gameStatus: 'pending',
-            units: null
+            units: []
         })
     }
 
     getRoomByToken(joinToken) {
         return this.Room.findOne({joinToken})
+    }
+
+    getRoomByName(roomName) {
+        return this.Room.findOne({roomName})
+    }
+
+    getPlayer(socketId) {
+        return this.Player.findOne({socketId})
     }
 
     addPlayer(playerNo, room, socketId, phonePosition) {
@@ -106,9 +131,8 @@ class MemDB {
     }
 
 
-    spawnUnit(roomId, playerId, unitType, position) {
-        const room = this.Room.findOne({roomId})
-        if (room) {
+    spawnUnit(roomName, playerId, unitType, position) {
+        if (roomName) {
             const unit = this.Unit.insert({
                 health: 100,
                 position,
@@ -117,8 +141,32 @@ class MemDB {
                 currentTarget: null,
                 spawnTime: 5000
             })
-            room.units.push(unit)
+            roomName.units.push(unit)
         }
+    }
+
+    unitCost(type) {
+        switch (type) {
+            case 'archer':
+                return 1000
+            case 'infantry':
+                return 1500
+            case 'spearman':
+                return 2000
+            default:
+                return null
+        }
+    }
+
+    createUnit(unitType, position, rotation, playerSocketId) {
+        return this.Unit.insert({
+            health: 100,
+            position,
+            unitType,
+            playerSocketId,
+            currentTarget: null,
+            spawnTime: 5000
+        })
     }
 
     updateUnit(data) {
