@@ -29,13 +29,16 @@ module.exports = io => {
         socket.emit("incorrectGameToken");
         return;
       }
+      socket.join(gameRoom.roomName);
       gameState.addPlayerTwo(gameRoom, socket.id, [1, 1, 1]);
       gameState.startGame(gameRoom);
+      io.to(gameRoom.roomName).emit("start", gameRoom);
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     });
 
-    socket.on("spawn", (unitType, playerNo) => {
-      const gameRoom = gameState.getRoom();
+    socket.on("spawn", data => {
+      console.log("Player request unit spawn", data);
+      io.emit("spawn", data);
     });
   });
 };
