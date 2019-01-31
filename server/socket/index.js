@@ -14,7 +14,8 @@ module.exports = io => {
     })
 
     socket.on('init', (roomName, ack) => {
-      socket.join('room:' + roomName);
+      roomName = 'room:' + roomName;
+      socket.join(roomName);
       const gameRoom = gameState.initGameRoom(roomName);
       gameState.addPlayerOne(gameRoom, socket.id, [1,1,1]);
       ack(gameRoom.joinToken);
@@ -28,19 +29,21 @@ module.exports = io => {
         socket.emit('incorrectGameToken')
         return
       }
+
+      socket.join(gameRoom.roomName);
       gameState.addPlayerTwo(gameRoom, socket.id, [1,1,1]);
       gameState.startGame(gameRoom);
 
-      io.to(gameRoom.player1.socketId).emit(gameRoom.player1)
+      io.to(gameRoom.player1.socketId).emit('start', gameRoom.player1)
 
-      io.to(gameRoom.player2.socketId).emit(gameRoom.player2)
+      io.to(gameRoom.player2.socketId).emit('start', gameRoom.player2)
 
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
-    // e7a7n5ot4
 
-    // New implementation
-    socket.on('spawn', (unitType, position, rotation) => {
+    // old implementation
+    socket.on('spawn', data => {
+      console.log(data);
       const roomName = Object.keys(socket.rooms)
       .filter(room => room.includes('room:'))[0]
       
@@ -54,20 +57,64 @@ module.exports = io => {
         socket.emit('match not found')
       }
 
+      const unitType = 'knight';
       const cost = gameState.unitCost(unitType)
 
-      if (player.doubloon >= cost) {
-        const unit = gameState.createUnit(unitType, position, rotation, socket.id);
+      if (player.doubloons >= cost) {
+        const unit = gameState.createUnit(player.playerNo, unitType, data.position, data.rotation,);
         player.doubloons -= cost;
-        gameRoom.push(unit)
-
-        socket.emit('unit', unit)
+        gameRoom.units.push(unit)
+        io.to(gameRoom.roomName).emit('spawn', unit)
         socket.emit('updatePlayerState', player);
 
       } else {
         socket.emit('insufficientDoubloons');
       }
     })
+    
 
+    socket.on('spawn new', unitType => {
+      // unitType = 'knight'
+
+      // const gameRoom = gameState.initGameRoom('testRoom');
+      // gameState.addPlayerOne(gameRoom, socket.id, [1,1,1]);
+      // const player = gameRoom.player1
+      
+      // const cost = gameState.unitCost(unitType)
+
+      const roomName = Object.keys(socket.rooms)
+      .filter(room => room.includes('room:'))[0]
+      console.log(roomName);
+      const gameRoom = gameState.getRoomByName(roomName)
+      if (!gameRoom) {
+        socket.emit('mnf', 'match not found')
+        return
+      }
+
+      const player = gameState.getPlayer(socket.id);
+      if(!player) {
+        socket.emit('mnf', 'match not found')
+        return
+      }
+
+      console.log(gameRoom);
+      const cost = gameState.unitCost(unitType)
+
+      if (player.doubloons >= cost) {
+        const position = player.playerNo === 1 ? [0,0,3.5] : [0,0,-3.5];
+        const rotation = player.PlayerNo === 1 ? [0, 180, 0] : [0, 0, 0];
+
+        const unit = gameState.createUnit(player.playerNo, unitType, position, rotation);
+        player.doubloons -= cost;
+        gameRoom.units.push(unit)
+
+        console.log(gameRoom.roomName);
+        io.to(gameRoom.roomName).emit('spawn', unit)
+        socket.emit('updatePlayerState', player);
+
+      } else {
+        socket.emit('insufficientDoubloons');
+      }
+    })
   })
 }

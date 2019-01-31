@@ -61,7 +61,7 @@ class MemDB {
     genJoinToken(roomName) {
         let joinToken;
         while (!joinToken) {
-            const temp = Math.random().toString(36).substring(4);
+            const temp = Math.random().toString(36).substring(6);
             const tokenFound = this.JoinToken.findOne({token: temp})
             if (!tokenFound) {
                 joinToken = temp;
@@ -99,6 +99,7 @@ class MemDB {
     addPlayer(playerNo, room, socketId, phonePosition) {
         const player = this.Player.insert({
                 socketId,
+                playerNo,
                 castleHealth: 1000,
                 doubloons: 10000,
                 phonePosition,
@@ -106,15 +107,15 @@ class MemDB {
                  knight: 0
                 }
         });
-        room[playerNo] = player;
+        room['player' + playerNo] = player;
     }
 
     addPlayerOne(room, socketId, phonePosition) {
-        this.addPlayer('player1', room, socketId, phonePosition)
+        this.addPlayer(1, room, socketId, phonePosition)
     }
 
     addPlayerTwo(room, socketId, phonePosition) {
-        this.addPlayer('player2', room, socketId, phonePosition)
+        this.addPlayer(2, room, socketId, phonePosition)
     }
 
     // Add p2 to db and update game status
@@ -130,21 +131,6 @@ class MemDB {
         this.Room.findAndRemove({roomName})
     }
 
-
-    spawnUnit(roomName, playerId, unitType, position) {
-        if (roomName) {
-            const unit = this.Unit.insert({
-                health: 100,
-                position,
-                unitType,
-                playerId,
-                currentTarget: null,
-                spawnTime: 5000
-            })
-            roomName.units.push(unit)
-        }
-    }
-
     unitCost(type) {
         switch (type) {
             case 'archer':
@@ -158,12 +144,13 @@ class MemDB {
         }
     }
 
-    createUnit(unitType, position, rotation, playerSocketId) {
+    createUnit(playerNo, unitType, position, rotation) {
         return this.Unit.insert({
             health: 100,
             position,
+            rotation,
             unitType,
-            playerSocketId,
+            playerNo,
             currentTarget: null,
             spawnTime: 5000
         })
