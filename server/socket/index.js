@@ -113,17 +113,16 @@ module.exports = io => {
       }
     })
 
-    socket.on('damage castle', unitType => {
+    socket.on('damage castle', ({unitType, attackedPlalyer}) => {
       const roomName = Object.keys(socket.rooms)
       .filter(room => room.includes('room:'))[0];
 
       const gameRoom = gameState.getRoomByName(roomName);
       const damage = gameState.unitDamage(unitType);
-      const attackedPlayer = gameRoom.player1.socketId === socket.id 
-        ? gameRoom.player2
-        : gameRoom.player1
+      attackedPlayer = gameRoom['player' + attackedPlalyer]
 
       attackedPlayer.castleHealth -= damage;
+      
       io.to(roomName).emit('damage castle', {
         playerNo: attackedPlayer.playerNo,
         castleHealth: attackedPlayer.castleHealth
