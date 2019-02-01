@@ -40,9 +40,9 @@ module.exports = io => {
       gameState.addPlayerTwo(gameRoom, socket.id, [1,1,1]);
       gameState.startGame(gameRoom);
 
-      io.to(gameRoom.player1.socketId).emit('start', gameRoom.player1)
+      io.to(gameRoom.player1.socketId).emit('start', {enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1})
 
-      io.to(gameRoom.player2.socketId).emit('start', gameRoom.player2)
+      io.to(gameRoom.player2.socketId).emit('start', {enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2})
 
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
@@ -113,16 +113,17 @@ module.exports = io => {
       }
     })
 
-    socket.on('damage castle', ({unitType, attackedPlalyer}) => {
+    socket.on('damage castle', ({unitType, attackedPlayer}) => {
       const roomName = Object.keys(socket.rooms)
       .filter(room => room.includes('room:'))[0];
 
       const gameRoom = gameState.getRoomByName(roomName);
       const damage = gameState.unitDamage(unitType);
-      attackedPlayer = gameRoom['player' + attackedPlalyer]
+
+      attackedPlayer = gameRoom['player' + attackedPlayer]
 
       attackedPlayer.castleHealth -= damage;
-      
+
       io.to(roomName).emit('damage castle', {
         playerNo: attackedPlayer.playerNo,
         castleHealth: attackedPlayer.castleHealth
