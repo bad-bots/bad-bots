@@ -125,7 +125,8 @@ module.exports = io => {
         const position = player.playerNo === 1 ? [0,0,3.5] : [0,0,-3.5];
         const rotation = player.PlayerNo === 1 ? [0, 180, 0] : [0, 0, 0];
 
-        const unit = gameState.createUnit(player.playerNo, unitType, position, rotation,);
+        const unit = gameState.createUnit(player.playerNo, unitType, position, rotation);
+        unit.unitId = unit['$loki'];        
         player.doubloons -= cost;
         gameRoom.units.push(unit)
 
@@ -161,7 +162,7 @@ module.exports = io => {
       if(attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo
         gameState.endGame(gameRoom, winningPlayer)
-        io.to(gameRoom.roomId).emit('gameOver', winningPlayer)
+        io.to(gameRoom.roomId).emit('endGame', winningPlayer)
       } else {
         io.to(gameRoom.roomId).emit('damageCastle', {
           playerNo: attackedPlayer.playerNo,
