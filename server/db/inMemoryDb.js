@@ -16,7 +16,7 @@ const inMemDb = new loki("games.json");
  *  },
  *  player2: { ... },
  *  roomId: roomId,
- *  gameStatus: 'inPlay',
+ *  gameStatus: 'inPlay', // or ['paused','finished']
  *  units: [
  *      {
  *          id: 1
@@ -35,21 +35,25 @@ const inMemDb = new loki("games.json");
  *
  * Insert
  * rooms.insert({roomId: 'asdfa', joinToken: 1})
+ * 
  * Find
  * rooms.find({player1: 55});
  * rooms.findOne({player2: 23});
- *
+ * 
+ * Update
  * rooms.findAndUpdate({roomId: 234}, )
  * rooms.update({})
  * rooms.updateWhere(obj => {
  *  obj.gameId === 55
- * }, {})
+ * }, {...})
  */
 
 class MemDB {
   constructor() {
     this.Player = inMemDb.addCollection("player");
+    this.Spectator = inMemDb.addCollection("spectators");
     this.Room = inMemDb.addCollection("rooms");
+    this.RoomId = inMemDb.addCollection("roomIds");
     this.Unit = inMemDb.addCollection("units");
     this.JoinToken = inMemDb.addCollection("joinTokens");
     this.debugRoom = this.createDebugRoom();
@@ -57,6 +61,7 @@ class MemDB {
 
   createDebugRoom() {
     return this.Room.insert({
+      roomId: 'debug',
       joinToken: 'debug',
       player1: null,
       player2: null,
@@ -66,13 +71,29 @@ class MemDB {
     });
   }
 
-  joinDebugRoom(io, socketId) {
+  genRoomId(roomName) {
+    let roomId;
+    while (!roomId) {
+      const temp = Math.random()
+        .toString(36)
+        .substring(2);
+      const roomIdExists = this.RoomId.findOne({ roomId: temp });
+      if (!roomIdExists) {
+        roomId = temp;
+      }
+    }
+    return this.RoomId.insert({ roomId, roomName });
+  }
+
+  joinDebugRoom(io, socketId, phonePosition) {
     let player;
     if (!this.debugRoom.player1) {
-      player = this.addPlayerOne(this.debugRoom, socketId, [0,0,0]);
+      player = this.createPlayer(1, socketId, phonePosition)
+      this.debugRoom.player1 = player;
     }
     else if(!this.debugRoom.player2) {
-      player = this.addPlayerTwo(this.debugRoom, socketId, [1,1,1]);
+      player = this.createPlayer(2, socketId, phonePosition)
+      this.debugRoom.player2 = player
     }
     io.to(socketId).emit('start', player)
   }
@@ -82,7 +103,7 @@ class MemDB {
     while (!joinToken) {
       const temp = Math.random()
         .toString(36)
-        .substring(6);
+        .substring(8);
       const tokenFound = this.JoinToken.findOne({ token: temp });
       if (!tokenFound) {
         joinToken = temp;
@@ -92,15 +113,19 @@ class MemDB {
     return joinToken;
   }
 
-  initGameRoom(roomName, p1SocketId, p1PhonePosition) {
+  createGameRoom(roomName) {
     const joinToken = this.genJoinToken(roomName);
-
+    const roomId = this.genRoomId('rId:' + roomName);
+    
     return this.Room.insert({
+      roomId,
       joinToken,
-      player1: null,
-      player2: null,
       roomName,
       gameStatus: "pending",
+      winner: null,
+      player1: null,
+      player2: null,
+      spectators: [],
       units: []
     });
   }
@@ -109,16 +134,24 @@ class MemDB {
     return this.Room.findOne({ joinToken });
   }
 
-  getRoomByName(roomName) {
-    return this.Room.findOne({ roomName });
+  getRoomByRoomId(roomId) {
+    return this.Room.findOne({ roomId });
   }
 
   getPlayer(socketId) {
     return this.Player.findOne({ socketId });
   }
 
-  addPlayer(playerNo, room, socketId, phonePosition) {
-    const player = this.Player.insert({
+  destroyPlayer(socketId) {
+    this.Player.findAndRemove({socketId})
+  }
+
+  destorySpectator(socketId) {
+    this.Spectator.findAndRemove({socketId})
+  }
+
+  createPlayer(playerNo, socketId, phonePosition) {
+    return this.Player.insert({
       socketId,
       playerNo,
       castleHealth: 1000,
@@ -128,16 +161,12 @@ class MemDB {
         knight: 0
       }
     });
-    room["player" + playerNo] = player;
-    return player
   }
 
-  addPlayerOne(room, socketId, phonePosition) {
-    return this.addPlayer(1, room, socketId, phonePosition);
-  }
-
-  addPlayerTwo(room, socketId, phonePosition) {
-    return this.addPlayer(2, room, socketId, phonePosition);
+  createSpectator(room, socketId) {
+    return this.Spectator.insert({
+      socketId
+    })
   }
 
   // Add p2 to db and update game status
@@ -149,8 +178,13 @@ class MemDB {
     gameRoom.gameStatus = "paused";
   }
 
-  destroyGame(roomName) {
-    this.Room.findAndRemove({ roomName });
+  endGame(gameRoom, playerNo) {
+    gameRoom.gameStatus = "finished";
+    gameRoom.winner = gameRoom.winner = playerNo
+  }
+
+  destroyGame(roomId) {
+    this.Room.findAndRemove({ roomId });
   }
 
   unitCost(type) {
@@ -190,10 +224,6 @@ class MemDB {
       currentTarget: null,
       spawnTime: 5000
     });
-  }
-
-  updateUnit(data) {
-    const unit = this.Unit.findAndUpdate({});
   }
 }
 
