@@ -47,7 +47,8 @@ module.exports = io => {
       console.log(`Client ${socket.id} has created room "${roomName}"`);
     })
 
-    socket.join('join', joinToken => {
+    socket.on('join', joinToken => {
+      console.log(`Client ${socket.id} attempting to join game with token: ${joinToken}`);
 
       const gameRoom = gameState.getRoomByToken(joinToken);
       if (!gameRoom){
@@ -55,18 +56,26 @@ module.exports = io => {
         return
       }
 
+      // Prevent client from joining game twice
+      if ((gameRoom.player1 && gameRoom.player1.socketId === socket.Id) ||
+          (gameRoom.player2 && gameRoom.player2.socketId === socket.id)) {
+            socket.emit('alreadyJoinedGame')
+            console.log(`Client ${socket.id} attempting to join alreadyJoinedGame.`);
+            return
+          }
+
       let playerAdded;
 
       if (gameRoom.player1 === null) {
-        const player = gameState.createPlayerOne(socket.id, [0,0,0]);
+        const player = gameState.createPlayer(1, socket.id, [0,0,0]);
         gameRoom.player1 = player;
         playerAdded = player;
       } else if(gameRoom.player2 === null) {
-        const player = gameState.createPlayerTwo(socket.id, [1,1,1]);
+        const player = gameState.createPlayer(2, socket.id, [1,1,1]);
         gameRoom.player2 = player;
         playerAdded = player
       } else {
-        const specator = gameState.addSpectator(gameRoom, socket.id);
+        const specator = gameState.createSpectator(socket.id);
         gameRoom.spectators.push(specator);
         playerAdded=specator;
       }
@@ -76,7 +85,7 @@ module.exports = io => {
       // If gameRoom is the debug game room, then start the game
       // Otherwise start the game if both p1 and p2 have joined.
       if (joinToken === 'debug') {
-        io.to(socket.id).emit('start', playerAdded)
+        io.to(socket.id).emit('start', {enemyCastleHealth: 1000, ...playerAdded})
       } else if (gameRoom.player1 && gameRoom.player2) {
         io.to(gameRoom.player1.socketId).emit('start', {enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1})
         io.to(gameRoom.player2.socketId).emit('start', {enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2})

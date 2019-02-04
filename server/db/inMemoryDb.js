@@ -56,21 +56,12 @@ class MemDB {
     this.RoomId = inMemDb.addCollection("roomIds");
     this.Unit = inMemDb.addCollection("units");
     this.JoinToken = inMemDb.addCollection("joinTokens");
-    this.debugRoom = this.createDebugRoom();
+
+    this.RoomId.insert({ roomId: 'rId:debug', roomName:'debug' });
+    this.debugRoom = this.createGameRoom('debug', 'debug', 'rId:debug');
   }
 
-  createDebugRoom() {
-    return this.Room.insert({
-      roomId: 'debug',
-      joinToken: 'debug',
-      player1: null,
-      player2: null,
-      roomName: 'room:debug',
-      gameStatus: "pending",
-      units: []
-    });
-  }
-
+  // Room Methods
   genRoomId(roomName) {
     let roomId;
     while (!roomId) {
@@ -83,19 +74,6 @@ class MemDB {
       }
     }
     return this.RoomId.insert({ roomId, roomName });
-  }
-
-  joinDebugRoom(io, socketId, phonePosition) {
-    let player;
-    if (!this.debugRoom.player1) {
-      player = this.createPlayer(1, socketId, phonePosition)
-      this.debugRoom.player1 = player;
-    }
-    else if(!this.debugRoom.player2) {
-      player = this.createPlayer(2, socketId, phonePosition)
-      this.debugRoom.player2 = player
-    }
-    io.to(socketId).emit('start', player)
   }
 
   genJoinToken(roomName) {
@@ -113,9 +91,10 @@ class MemDB {
     return joinToken;
   }
 
-  createGameRoom(roomName) {
-    const joinToken = this.genJoinToken(roomName);
-    const roomId = this.genRoomId('rId:' + roomName);
+  createGameRoom(roomName, joinToken=null, roomId=null) {
+    roomId = 'rId:' + roomId || this.genRoomId('rId:' + roomName);
+    joinToken = joinToken || this.genJoinToken(roomName);
+    
     
     return this.Room.insert({
       roomId,
@@ -138,18 +117,7 @@ class MemDB {
     return this.Room.findOne({ roomId });
   }
 
-  getPlayer(socketId) {
-    return this.Player.findOne({ socketId });
-  }
-
-  destroyPlayer(socketId) {
-    this.Player.findAndRemove({socketId})
-  }
-
-  destorySpectator(socketId) {
-    this.Spectator.findAndRemove({socketId})
-  }
-
+  // Player Methods
   createPlayer(playerNo, socketId, phonePosition) {
     return this.Player.insert({
       socketId,
@@ -163,13 +131,26 @@ class MemDB {
     });
   }
 
-  createSpectator(room, socketId) {
+  createSpectator(socketId) {
     return this.Spectator.insert({
       socketId
     })
   }
 
-  // Add p2 to db and update game status
+  getPlayer(socketId) {
+    return this.Player.findOne({ socketId });
+  }
+
+  destroyPlayer(socketId) {
+    this.Player.findAndRemove({socketId})
+  }
+
+  destorySpectator(socketId) {
+    this.Spectator.findAndRemove({socketId})
+  }
+
+
+  // Game methods
   startGame(gameRoom) {
     gameRoom.gameStatus = "inPlay";
   }
@@ -187,6 +168,7 @@ class MemDB {
     this.Room.findAndRemove({ roomId });
   }
 
+  // Unit methods
   unitCost(type) {
     switch (type) {
       case "archer":
@@ -212,7 +194,6 @@ class MemDB {
         return 100;
     }
   }
-
 
   createUnit(playerNo, unitType, position, rotation) {
     return this.Unit.insert({
