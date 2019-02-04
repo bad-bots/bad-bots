@@ -57,14 +57,14 @@ class MemDB {
     this.Unit = inMemDb.addCollection("units");
     this.JoinToken = inMemDb.addCollection("joinTokens");
 
-    this.debugRoom = this.createGameRoom('debug', 'debug', 'rId:debug');
+    this.debugRoom = this.createGameRoom('debug', 'debug');
   }
 
   // Room Methods
-  genRoomId(roomName) {
+  getRoomId(roomName) {
     let roomId;
     while (!roomId) {
-      const temp = Math.random()
+      const temp = 'rId:' + Math.random()
         .toString(36)
         .substring(2);
       const roomIdExists = this.RoomId.findOne({ roomId: temp });
@@ -72,7 +72,8 @@ class MemDB {
         roomId = temp;
       }
     }
-    return this.RoomId.insert({ roomId, roomName });
+    this.RoomId.insert({ roomId, roomName });
+    return roomId
   }
 
   genJoinToken(roomName) {
@@ -90,8 +91,8 @@ class MemDB {
     return joinToken;
   }
 
-  createGameRoom(roomName, joinToken=null, roomId=null) {
-    roomId = roomId || this.genRoomId('rId:' + roomName);
+  createGameRoom(roomName, joinToken=null) {
+    const roomId = this.getRoomId(roomName);
     joinToken = joinToken || this.genJoinToken(roomName);
     
     

@@ -6,14 +6,13 @@ const getAllGameRoomIds  = rooms => {
 }
 
 const getLatestRoom = rooms => {
-  const roomNames = getAllGameRoomIds(rooms);
-
+  const roomIds = getAllGameRoomIds(rooms);
   let latestGame;
   let lastTime = -1;
 
-  roomNames.forEach(roomId => {
+  roomIds.forEach(roomId => {
     const gameRoom = gameState.getRoomByRoomId(roomId);
-    if (gameRoom.meta.created > lastTime) {
+    if (gameRoom && gameRoom.meta.created > lastTime) {
       latestGame = gameRoom;
     }
   })
@@ -36,11 +35,11 @@ module.exports = io => {
         return;
       }
 
-      roomName = 'room:' + roomName;
       const gameRoom = gameState.createGameRoom(roomName);
 
       const player1 = gameState.createPlayer(1, socket.id, [1,1,1]);
       gameRoom.player1 = player1;
+
       socket.join(gameRoom.roomId)
 
       ack(gameRoom.joinToken);
@@ -98,11 +97,11 @@ module.exports = io => {
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
 
-    socket.on('spawn', ({unitType, position, rotation}) => {
+    socket.on('spawn', ({unitType}) => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
-        socket.emit('match not found')
+        socket.emit('matchNotFound')
         console.log('room not found');
         return
       }
@@ -119,17 +118,13 @@ module.exports = io => {
           return
       }
 
-      // Set position if it is not provided
-      if(!position) {
-        position = player.playerNo === 1 ? [0,0,3.5] : [0,0,-3.5];
-      }
-      if(!rotation) {
-        rotation = player.PlayerNo === 1 ? [0, 180, 0] : [0, 0, 0];
-      }
-
       // Spawn unit if player has enough doubloons
       const cost = gameState.unitCost(unitType)
       if (player.doubloons >= cost) {
+        // Set position if it is not provided
+        const position = player.playerNo === 1 ? [0,0,3.5] : [0,0,-3.5];
+        const rotation = player.PlayerNo === 1 ? [0, 180, 0] : [0, 0, 0];
+
         const unit = gameState.createUnit(player.playerNo, unitType, position, rotation,);
         player.doubloons -= cost;
         gameRoom.units.push(unit)
