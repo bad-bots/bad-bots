@@ -57,7 +57,6 @@ class MemDB {
     this.Unit = inMemDb.addCollection("units");
     this.JoinToken = inMemDb.addCollection("joinTokens");
 
-    this.RoomId.insert({ roomId: 'rId:debug', roomName:'debug' });
     this.debugRoom = this.createGameRoom('debug', 'debug', 'rId:debug');
   }
 
@@ -92,7 +91,7 @@ class MemDB {
   }
 
   createGameRoom(roomName, joinToken=null, roomId=null) {
-    roomId = 'rId:' + roomId || this.genRoomId('rId:' + roomName);
+    roomId = roomId || this.genRoomId('rId:' + roomName);
     joinToken = joinToken || this.genJoinToken(roomName);
     
     
@@ -126,7 +125,7 @@ class MemDB {
       doubloons: 10000,
       phonePosition,
       coolDowns: {
-        knight: 0
+        Knight: 0
       }
     });
   }
@@ -171,24 +170,24 @@ class MemDB {
   // Unit methods
   unitCost(type) {
     switch (type) {
-      case "archer":
-        return 10;
-      case "knight":
-        return 15;
-      case "spearman":
-        return 20;
+      case "Archer":
+        return 100;
+      case "Knight":
+        return 150;
+      case "Phalanx":
+        return 200;
       default:
-        return 10;
+        return 100;
     }
   }
 
   unitDamage(type) {
     switch (type) {
-      case "archer":
+      case "Archer":
         return 100;
-      case "knight":
+      case "Knight":
         return 150;
-      case "spearman":
+      case "Phallanx":
         return 200;
       default:
         return 100;

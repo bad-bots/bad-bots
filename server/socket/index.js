@@ -82,10 +82,15 @@ module.exports = io => {
 
       socket.join(gameRoom.roomId);
 
-      // If gameRoom is the debug game room, then start the game
+      // If gameRoom is the debug game room, then add a player2, start the game
       // Otherwise start the game if both p1 and p2 have joined.
       if (joinToken === 'debug') {
+        if (gameRoom.player2 === null) {
+          const player = gameState.createPlayer(2, null, [1,1,1]);
+          gameRoom.player2 = player;
+        }
         io.to(socket.id).emit('start', {enemyCastleHealth: 1000, ...playerAdded})
+
       } else if (gameRoom.player1 && gameRoom.player2) {
         io.to(gameRoom.player1.socketId).emit('start', {enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1})
         io.to(gameRoom.player2.socketId).emit('start', {enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2})
@@ -139,10 +144,6 @@ module.exports = io => {
 
     })
 
-    socket.on('damageUnit', ({unitType, attackedUnitId}) => {
-
-    })
-
     socket.on('damageCastle', ({unitType, attackedPlayerNo}) => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
@@ -153,6 +154,7 @@ module.exports = io => {
       }
 
       const damage = gameState.unitDamage(unitType);
+      
       const attackedPlayer = gameRoom['player' + attackedPlayerNo]
       attackedPlayer.castleHealth -= damage;
 
@@ -170,6 +172,12 @@ module.exports = io => {
         
       }
     })
+
+    
+    socket.on('damageUnit', ({unitType, attackedUnitId}) => {
+
+    })
+
 
     socket.on('restart', () => {
       // Get latest game room
