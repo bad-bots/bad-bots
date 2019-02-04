@@ -131,7 +131,10 @@ module.exports = io => {
 
         // Update player doubloons
         // Spawn unit
-        socket.emit('updatePlayerState', player);
+        socket.emit('updatePlayerDoubloons', {
+          playerNo: player.playerNo,
+          doubloons: player.doubloons
+        });
         io.to(gameRoom.roomId).emit('spawn', unit)
       } else {
         socket.emit('insufficientDoubloons');
