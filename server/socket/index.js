@@ -97,7 +97,7 @@ module.exports = io => {
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
 
-    socket.on('spawn', ({unitType}) => {
+    socket.on('spawn', unitType => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
@@ -162,19 +162,36 @@ module.exports = io => {
       if(attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo
         gameState.endGame(gameRoom, winningPlayer)
-        io.to(gameRoom.roomId).emit('endGame', winningPlayer)
-      } else {
-        io.to(gameRoom.roomId).emit('damageCastle', {
-          playerNo: attackedPlayer.playerNo,
-          castleHealth: attackedPlayer.castleHealth
-        });
-        
-      }
+      } 
+      io.to(gameRoom.roomId).emit('damageCastle', {
+        playerNo: attackedPlayer.playerNo,
+        castleHealth: attackedPlayer.castleHealth
+      }); 
     })
 
     
     socket.on('damageUnit', ({unitType, attackedUnitId}) => {
+      // Get latest game room
+      const gameRoom = getLatestRoom(socket.rooms);
+      if (!gameRoom) {
+        socket.emit('match not found')
+        console.log('room not found');
+        return
+      }
 
+      const damage = gameState.unitDamage(unitType);
+      const attackedUnit = gameRoom.units.find(unit => {
+        return unit.unitId === attackedUnitId
+      })
+      if (!attackedUnit) {
+        socket.emit('unitNotFound', attackedUnitId)
+      } else {
+        attackedUnit.health -= damage;
+        if (attackedUnit.health < 0) {
+          gameState.destroyUnit(attackedUnit);
+        }
+        io.to(gameRoom.roomId).emit('damageUnit', attackedUnit);
+      }
     })
 
 

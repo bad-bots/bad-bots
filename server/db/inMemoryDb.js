@@ -126,7 +126,7 @@ class MemDB {
       doubloons: 10000,
       phonePosition,
       coolDowns: {
-        Knight: 0
+        knight: 0
       }
     });
   }
@@ -171,11 +171,11 @@ class MemDB {
   // Unit methods
   unitCost(type) {
     switch (type) {
-      case "Archer":
+      case "archer":
         return 100;
-      case "Knight":
+      case "knight":
         return 150;
-      case "Phalanx":
+      case "phallanx":
         return 200;
       default:
         return 100;
@@ -184,11 +184,11 @@ class MemDB {
 
   unitDamage(type) {
     switch (type) {
-      case "Archer":
+      case "archer":
         return 100;
-      case "Knight":
+      case "knight":
         return 150;
-      case "Phallanx":
+      case "phallanx":
         return 200;
       default:
         return 100;
@@ -197,7 +197,7 @@ class MemDB {
 
   createUnit(playerNo, unitType, position, rotation) {
     return this.Unit.insert({
-      health: 100,
+      health: 500,
       position,
       rotation,
       unitType,
@@ -205,6 +205,10 @@ class MemDB {
       currentTarget: null,
       spawnTime: 5000
     });
+  }
+
+  destroyUnit(unitId) {
+    this.Unit.findAndRemove({id: unitId})
   }
 }
 
