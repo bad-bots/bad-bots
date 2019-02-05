@@ -32,7 +32,7 @@ module.exports = io => {
     // Create room and add room creator as P1
     socket.on("create", (roomName, ack) => {
       // Do not create debug room  because it is created on server init.
-      if (roomName === "debug") {
+      if (roomName === "debug" || roomName === "debugAI") {
         return;
       }
 
@@ -90,7 +90,7 @@ module.exports = io => {
 
       // If gameRoom is the debug game room, then add a player2, start the game
       // Otherwise start the game if both p1 and p2 have joined.
-      if (joinToken === "debug") {
+      if (joinToken === "debug" || joinToken === "debugAI") {
         if (gameRoom.player2 === null) {
           const player = gameState.createPlayer(2, null, [1, 1, 1]);
           gameRoom.player2 = player;
@@ -99,6 +99,20 @@ module.exports = io => {
           enemyCastleHealth: 1000,
           ...playerAdded
         });
+        if (joinToken === "debugAI") {
+          const unitTypes = ["knight", "archer", "phallanx"];
+          setInterval(() => {
+            const position = [0, 0, -3.5];
+            const rotation = [0, 0, 0];
+            const unit = gameState.createUnit(
+              2,
+              unitTypes[Math.floor(Math.random() * 3)],
+              position,
+              rotation
+            );
+            io.to(gameRoom.roomId).emit("spawn", unit);
+          }, 1500);
+        }
       } else if (gameRoom.player1 && gameRoom.player2) {
         io.to(gameRoom.player1.socketId).emit("start", {
           enemyCastleHealth: gameRoom.player2.castleHealth,
