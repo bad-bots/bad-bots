@@ -35,11 +35,11 @@ const inMemDb = new loki("games.json");
  *
  * Insert
  * rooms.insert({roomId: 'asdfa', joinToken: 1})
- * 
+ *
  * Find
  * rooms.find({player1: 55});
  * rooms.findOne({player2: 23});
- * 
+ *
  * Update
  * rooms.findAndUpdate({roomId: 234}, )
  * rooms.update({})
@@ -57,23 +57,25 @@ class MemDB {
     this.Unit = inMemDb.addCollection("units");
     this.JoinToken = inMemDb.addCollection("joinTokens");
 
-    this.debugRoom = this.createGameRoom('debug', 'debug');
+    this.debugRoom = this.createGameRoom("debug", "debug");
   }
 
   // Room Methods
   getRoomId(roomName) {
     let roomId;
     while (!roomId) {
-      const temp = 'rId:' + Math.random()
-        .toString(36)
-        .substring(2);
+      const temp =
+        "rId:" +
+        Math.random()
+          .toString(36)
+          .substring(2);
       const roomIdExists = this.RoomId.findOne({ roomId: temp });
       if (!roomIdExists) {
         roomId = temp;
       }
     }
     this.RoomId.insert({ roomId, roomName });
-    return roomId
+    return roomId;
   }
 
   genJoinToken(roomName) {
@@ -91,11 +93,10 @@ class MemDB {
     return joinToken;
   }
 
-  createGameRoom(roomName, joinToken=null) {
+  createGameRoom(roomName, joinToken = null) {
     const roomId = this.getRoomId(roomName);
     joinToken = joinToken || this.genJoinToken(roomName);
-    
-    
+
     return this.Room.insert({
       roomId,
       joinToken,
@@ -134,7 +135,7 @@ class MemDB {
   createSpectator(socketId) {
     return this.Spectator.insert({
       socketId
-    })
+    });
   }
 
   getPlayer(socketId) {
@@ -142,13 +143,12 @@ class MemDB {
   }
 
   destroyPlayer(socketId) {
-    this.Player.findAndRemove({socketId})
+    this.Player.findAndRemove({ socketId });
   }
 
   destorySpectator(socketId) {
-    this.Spectator.findAndRemove({socketId})
+    this.Spectator.findAndRemove({ socketId });
   }
-
 
   // Game methods
   startGame(gameRoom) {
@@ -161,7 +161,7 @@ class MemDB {
 
   endGame(gameRoom, playerNo) {
     gameRoom.gameStatus = "finished";
-    gameRoom.winner = gameRoom.winner = playerNo
+    gameRoom.winner = gameRoom.winner = playerNo;
   }
 
   destroyGame(roomId) {
@@ -197,7 +197,7 @@ class MemDB {
 
   createUnit(playerNo, unitType, position, rotation) {
     return this.Unit.insert({
-      health: 100,
+      health: 200,
       position,
       rotation,
       unitType,
