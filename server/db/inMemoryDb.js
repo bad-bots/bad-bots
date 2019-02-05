@@ -58,6 +58,7 @@ class MemDB {
     this.JoinToken = inMemDb.addCollection("joinTokens");
 
     this.debugRoom = this.createGameRoom('debug', 'debug');
+    this.debugAIRoom = this.createGameRoom('debugAI', 'debugAI');
   }
 
   // Room Methods
