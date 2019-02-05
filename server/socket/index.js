@@ -7,12 +7,13 @@ const getAllGameRoomIds = rooms => {
 const getLatestRoom = rooms => {
   const roomIds = getAllGameRoomIds(rooms);
   let latestGame;
-  let lastTime = -1;
+  let createdTime = -Infinity;
 
   roomIds.forEach(roomId => {
     const gameRoom = gameState.getRoomByRoomId(roomId);
-    if (gameRoom && gameRoom.meta.created > lastTime) {
+    if (gameRoom && gameRoom.meta.created > createdTime) {
       latestGame = gameRoom;
+      createdTime = gameRoom.meta.created
     }
   });
 
@@ -114,14 +115,15 @@ module.exports = io => {
           }, 1500);
         }
       } else if (gameRoom.player1 && gameRoom.player2) {
-        io.to(gameRoom.player1.socketId).emit("start", {
-          enemyCastleHealth: gameRoom.player2.castleHealth,
-          ...gameRoom.player1
-        });
-        io.to(gameRoom.player2.socketId).emit("start", {
-          enemyCastleHealth: gameRoom.player1.castleHealth,
-          ...gameRoom.player2
-        });
+        io.to(gameRoom.player1.socketId).emit('start', { enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1 })
+        io.to(gameRoom.player2.socketId).emit('start', { enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2 })
+
+        gameRoom.interval = setInterval(() => {
+          gameRoom.player1.doubloons += 100;
+          gameRoom.player2.doubloons += 100;
+          io.to(gameRoom.player1.socketId).emit('updatePlayerDoubloons', { playerNo: 1, doubloons: gameRoom.player1.doubloons })
+          io.to(gameRoom.player2.socketId).emit('updatePlayerDoubloons', { playerNo: 2, doubloons: gameRoom.player2.doubloons })
+        }, 5000)
       }
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     });
@@ -192,15 +194,15 @@ module.exports = io => {
 
       // Check to see if the game is over
       // Otherwise emit new castleHealth
+      io.to(gameRoom.roomId).emit("damageCastle", {
+        playerNo: attackedPlayer.playerNo,
+        castleHealth: attackedPlayer.castleHealth
+      });
       if (attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo;
         gameState.endGame(gameRoom, winningPlayer);
         io.to(gameRoom.roomId).emit("endGame", winningPlayer);
-      } else {
-        io.to(gameRoom.roomId).emit("damageCastle", {
-          playerNo: attackedPlayer.playerNo,
-          castleHealth: attackedPlayer.castleHealth
-        });
+        clearInterval(gameRoom.interval)
       }
     });
 
@@ -231,7 +233,7 @@ module.exports = io => {
 
       console.log(
         `${attackerId} attacked ${defenderId} for ${damage} leaving it with ${
-          defender.health
+        defender.health
         } hp`
       );
 
