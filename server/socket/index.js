@@ -1,19 +1,20 @@
 const gameState = require('../db/inMemoryDb');
 
-const getAllGameRoomIds  = rooms => {
+const getAllGameRoomIds = rooms => {
   return Object.keys(rooms)
-  .filter(room => room.includes('rId:'))
+    .filter(room => room.includes('rId:'))
 }
 
 const getLatestRoom = rooms => {
   const roomIds = getAllGameRoomIds(rooms);
   let latestGame;
-  let lastTime = -1;
+  let createdTime = -Infinity;
 
   roomIds.forEach(roomId => {
     const gameRoom = gameState.getRoomByRoomId(roomId);
-    if (gameRoom && gameRoom.meta.created > lastTime) {
+    if (gameRoom && gameRoom.meta.created > createdTime) {
       latestGame = gameRoom;
+      createdTime = gameRoom.meta.created
     }
   })
 
@@ -37,7 +38,7 @@ module.exports = io => {
 
       const gameRoom = gameState.createGameRoom(roomName);
 
-      const player1 = gameState.createPlayer(1, socket.id, [1,1,1]);
+      const player1 = gameState.createPlayer(1, socket.id, [1, 1, 1]);
       gameRoom.player1 = player1;
 
       socket.join(gameRoom.roomId)
@@ -50,33 +51,33 @@ module.exports = io => {
       console.log(`Client ${socket.id} attempting to join game with token: ${joinToken}`);
 
       const gameRoom = gameState.getRoomByToken(joinToken);
-      if (!gameRoom){
+      if (!gameRoom) {
         socket.emit('incorrectGameToken');
         return
       }
 
       // Prevent client from joining game twice
       if ((gameRoom.player1 && gameRoom.player1.socketId === socket.Id) ||
-          (gameRoom.player2 && gameRoom.player2.socketId === socket.id)) {
-            socket.emit('alreadyJoinedGame')
-            console.log(`Client ${socket.id} attempting to join alreadyJoinedGame.`);
-            return
-          }
+        (gameRoom.player2 && gameRoom.player2.socketId === socket.id)) {
+        socket.emit('alreadyJoinedGame')
+        console.log(`Client ${socket.id} attempting to join alreadyJoinedGame.`);
+        return
+      }
 
       let playerAdded;
 
       if (gameRoom.player1 === null) {
-        const player = gameState.createPlayer(1, socket.id, [0,0,0]);
+        const player = gameState.createPlayer(1, socket.id, [0, 0, 0]);
         gameRoom.player1 = player;
         playerAdded = player;
-      } else if(gameRoom.player2 === null) {
-        const player = gameState.createPlayer(2, socket.id, [1,1,1]);
+      } else if (gameRoom.player2 === null) {
+        const player = gameState.createPlayer(2, socket.id, [1, 1, 1]);
         gameRoom.player2 = player;
         playerAdded = player
       } else {
         const specator = gameState.createSpectator(socket.id);
         gameRoom.spectators.push(specator);
-        playerAdded=specator;
+        playerAdded = specator;
       }
 
       socket.join(gameRoom.roomId);
@@ -85,19 +86,25 @@ module.exports = io => {
       // Otherwise start the game if both p1 and p2 have joined.
       if (joinToken === 'debug') {
         if (gameRoom.player2 === null) {
-          const player = gameState.createPlayer(2, null, [1,1,1]);
+          const player = gameState.createPlayer(2, null, [1, 1, 1]);
           gameRoom.player2 = player;
         }
-        io.to(socket.id).emit('start', {enemyCastleHealth: 1000, ...playerAdded})
+        io.to(socket.id).emit('start', { enemyCastleHealth: 1000, ...playerAdded })
 
       } else if (gameRoom.player1 && gameRoom.player2) {
-        io.to(gameRoom.player1.socketId).emit('start', {enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1})
-        io.to(gameRoom.player2.socketId).emit('start', {enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2})
+        io.to(gameRoom.player1.socketId).emit('start', { enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1 })
+        io.to(gameRoom.player2.socketId).emit('start', { enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2 })
+        gameRoom.interval = setInterval(() => {
+          gameRoom.player1.doubloons += 100;
+          gameRoom.player2.doubloons += 100;
+          io.to(gameRoom.player1.socketId).emit('updatePlayerDoubloons', { playerNo: 1, doubloons: gameRoom.player1.doubloons })
+          io.to(gameRoom.player2.socketId).emit('updatePlayerDoubloons', { playerNo: 2, doubloons: gameRoom.player2.doubloons })
+        }, 5000)
       }
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
 
-    socket.on('spawn', ({unitType}) => {
+    socket.on('spawn', (unitType) => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
@@ -108,25 +115,25 @@ module.exports = io => {
 
       // Get player requesting unit spawn from socket.id
       let player;
-      if(socket.id === gameRoom.player1.socketId) {
+      if (socket.id === gameRoom.player1.socketId) {
         player = gameRoom.player1
-      } else if(socket.id === gameRoom.player2.socketId) {
+      } else if (socket.id === gameRoom.player2.socketId) {
         player = gameRoom.player2
       } else {
-          socket.emit('unauthorized player')
-          console.log('player not found');
-          return
+        socket.emit('unauthorized player')
+        console.log('player not found');
+        return
       }
 
       // Spawn unit if player has enough doubloons
       const cost = gameState.unitCost(unitType)
       if (player.doubloons >= cost) {
         // Set position if it is not provided
-        const position = player.playerNo === 1 ? [0,0,3.5] : [0,0,-3.5];
+        const position = player.playerNo === 1 ? [0, 0, 3.5] : [0, 0, -3.5];
         const rotation = player.PlayerNo === 1 ? [0, 180, 0] : [0, 0, 0];
 
         const unit = gameState.createUnit(player.playerNo, unitType, position, rotation);
-        unit.unitId = unit['$loki'];        
+        unit.unitId = unit['$loki'];
         player.doubloons -= cost;
         gameRoom.units.push(unit)
 
@@ -143,7 +150,7 @@ module.exports = io => {
 
     })
 
-    socket.on('damageCastle', ({unitType, attackedPlayerNo}) => {
+    socket.on('damageCastle', ({ unitType, attackedPlayerNo }) => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
@@ -153,27 +160,28 @@ module.exports = io => {
       }
 
       const damage = gameState.unitDamage(unitType);
-      
+
       const attackedPlayer = gameRoom['player' + attackedPlayerNo]
       attackedPlayer.castleHealth -= damage;
 
       // Check to see if the game is over
       // Otherwise emit new castleHealth
-      if(attackedPlayer.castleHealth <= 0) {
+      if (attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo
         gameState.endGame(gameRoom, winningPlayer)
+        clearInterval(gameRoom.interval)
         io.to(gameRoom.roomId).emit('endGame', winningPlayer)
       } else {
         io.to(gameRoom.roomId).emit('damageCastle', {
           playerNo: attackedPlayer.playerNo,
           castleHealth: attackedPlayer.castleHealth
         });
-        
+
       }
     })
 
-    
-    socket.on('damageUnit', ({unitType, attackedUnitId}) => {
+
+    socket.on('damageUnit', ({ unitType, attackedUnitId }) => {
 
     })
 
@@ -198,7 +206,7 @@ module.exports = io => {
       roomNames.forEach(roomName => {
         socket.leave(roomName);
         const gameRoom = gameState.getRoomByRoomId(roomName);
-        
+
         // Destroy gameRoom if there are no players left;
 
       })

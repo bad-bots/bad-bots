@@ -105,7 +105,8 @@ class MemDB {
       player1: null,
       player2: null,
       spectators: [],
-      units: []
+      units: [],
+      interval: null
     });
   }
 
@@ -123,7 +124,7 @@ class MemDB {
       socketId,
       playerNo,
       castleHealth: 1000,
-      doubloons: 10000,
+      doubloons: 500,
       phonePosition,
       coolDowns: {
         Knight: 0
