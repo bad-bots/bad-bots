@@ -32,7 +32,7 @@ module.exports = io => {
     // Create room and add room creator as P1
     socket.on('create', (roomName, ack) => {
       // Do not create debug room  because it is created on server init.
-      if (roomName === 'debug') {
+      if (roomName === 'debug' || roomName === 'debugAI') {
         return;
       }
 
@@ -84,12 +84,21 @@ module.exports = io => {
 
       // If gameRoom is the debug game room, then add a player2, start the game
       // Otherwise start the game if both p1 and p2 have joined.
-      if (joinToken === 'debug') {
+      if (joinToken === 'debug' || joinToken === 'debugAI') {
         if (gameRoom.player2 === null) {
           const player = gameState.createPlayer(2, null, [1, 1, 1]);
           gameRoom.player2 = player;
         }
         io.to(socket.id).emit('start', { enemyCastleHealth: 1000, ...playerAdded })
+        if (joinToken === 'debugAI') {
+          const unitTypes = ['knight', 'archer', 'phallanx'];
+          setInterval(() => {
+            const position = [0,0,-3.5];
+            const rotation = [0, 0, 0];
+            const unit = gameState.createUnit(2, unitTypes[Math.floor(Math.random() *3)], position, rotation);
+            io.to(gameRoom.roomId).emit('spawn', unit);
+          }, 1500)
+        }
 
       } else if (gameRoom.player1 && gameRoom.player2) {
         io.to(gameRoom.player1.socketId).emit('start', { enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1 })
@@ -105,7 +114,7 @@ module.exports = io => {
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     })
 
-    socket.on('spawn', (unitType) => {
+    socket.on('spawn', unitType => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
@@ -169,21 +178,39 @@ module.exports = io => {
       // Otherwise emit new castleHealth
       if (attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo
-        gameState.endGame(gameRoom, winningPlayer)
+        io.to(gameRoom.roomId).emit('endGame', winningPlayer);
+        gameState.endGame(gameRoom, winningPlayer);
         clearInterval(gameRoom.interval)
-        io.to(gameRoom.roomId).emit('endGame', winningPlayer)
-      } else {
-        io.to(gameRoom.roomId).emit('damageCastle', {
-          playerNo: attackedPlayer.playerNo,
-          castleHealth: attackedPlayer.castleHealth
-        });
-
-      }
+      } 
+      io.to(gameRoom.roomId).emit('damageCastle', {
+        playerNo: attackedPlayer.playerNo,
+        castleHealth: attackedPlayer.castleHealth
+      }); 
     })
 
+    
+    socket.on('damageUnit', ({unitType, attackedUnitId}) => {
+      // Get latest game room
+      const gameRoom = getLatestRoom(socket.rooms);
+      if (!gameRoom) {
+        socket.emit('match not found')
+        console.log('room not found');
+        return
+      }
 
-    socket.on('damageUnit', ({ unitType, attackedUnitId }) => {
-
+      const damage = gameState.unitDamage(unitType);
+      const attackedUnit = gameRoom.units.find(unit => {
+        return unit.unitId === attackedUnitId
+      })
+      if (!attackedUnit) {
+        socket.emit('unitNotFound', attackedUnitId)
+      } else {
+        attackedUnit.health -= damage;
+        if (attackedUnit.health < 0) {
+          gameState.destroyUnit(attackedUnit);
+        }
+        io.to(gameRoom.roomId).emit('damageUnit', attackedUnit);
+      }
     })
 
 
