@@ -94,6 +94,7 @@ module.exports = io => {
       } else if (gameRoom.player1 && gameRoom.player2) {
         io.to(gameRoom.player1.socketId).emit('start', { enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1 })
         io.to(gameRoom.player2.socketId).emit('start', { enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2 })
+        
         gameRoom.interval = setInterval(() => {
           gameRoom.player1.doubloons += 100;
           gameRoom.player2.doubloons += 100;
