@@ -25,10 +25,13 @@ module.exports = io => {
     console.log(
       `A socket connection to npm server has been made: ${socket.id}`
     );
+<<<<<<< HEAD
+=======
 
     socket.on("disconnect", () => {
       console.log(`Connection ${socket.id} has left the building`);
     });
+>>>>>>> 47f15c7e12e13faf22f007a7ce509e2ab0124ee1
 
     // Create room and add room creator as P1
     socket.on("create", (roomName, ack) => {
@@ -97,7 +100,11 @@ module.exports = io => {
           gameRoom.player2 = player;
         }
         io.to(socket.id).emit("start", {
+<<<<<<< HEAD
+          enemyCastleHealth: gameRoom.player2.castleHealth,
+=======
           enemyCastleHealth: 1000,
+>>>>>>> 47f15c7e12e13faf22f007a7ce509e2ab0124ee1
           ...playerAdded
         });
         if (joinToken === "debugAI") {
@@ -115,6 +122,16 @@ module.exports = io => {
           }, 1500);
         }
       } else if (gameRoom.player1 && gameRoom.player2) {
+<<<<<<< HEAD
+        io.to(gameRoom.player1.socketId).emit("start", {
+          enemyCastleHealth: gameRoom.player2.castleHealth,
+          ...gameRoom.player1
+        });
+        io.to(gameRoom.player2.socketId).emit("start", {
+          enemyCastleHealth: gameRoom.player1.castleHealth,
+          ...gameRoom.player2
+        });
+=======
         io.to(gameRoom.player1.socketId).emit('start', { enemyCastleHealth: gameRoom.player2.castleHealth, ...gameRoom.player1 })
         io.to(gameRoom.player2.socketId).emit('start', { enemyCastleHealth: gameRoom.player1.castleHealth, ...gameRoom.player2 })
 
@@ -124,6 +141,7 @@ module.exports = io => {
           io.to(gameRoom.player1.socketId).emit('updatePlayerDoubloons', { playerNo: 1, doubloons: gameRoom.player1.doubloons })
           io.to(gameRoom.player2.socketId).emit('updatePlayerDoubloons', { playerNo: 2, doubloons: gameRoom.player2.doubloons })
         }, 5000)
+>>>>>>> 47f15c7e12e13faf22f007a7ce509e2ab0124ee1
       }
       console.log(`Client ${socket.id} has joined game. Game has started.`);
     });
@@ -144,7 +162,11 @@ module.exports = io => {
       } else if (socket.id === gameRoom.player2.socketId) {
         player = gameRoom.player2;
       } else {
+<<<<<<< HEAD
+        socket.emit("unauthorizedPlayer");
+=======
         socket.emit("unauthorized player");
+>>>>>>> 47f15c7e12e13faf22f007a7ce509e2ab0124ee1
         console.log("player not found");
         return;
       }
@@ -172,6 +194,10 @@ module.exports = io => {
           playerNo: player.playerNo,
           doubloons: player.doubloons
         });
+<<<<<<< HEAD
+
+=======
+>>>>>>> 47f15c7e12e13faf22f007a7ce509e2ab0124ee1
         io.to(gameRoom.roomId).emit("spawn", unit);
       } else {
         socket.emit("insufficientDoubloons");
@@ -180,6 +206,7 @@ module.exports = io => {
 
     socket.on("damageCastle", ({ unitType, attackedPlayerNo }) => {
       // Get latest game room
+      console.log(socket.rooms);
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
         socket.emit("match not found");
@@ -192,21 +219,28 @@ module.exports = io => {
       const attackedPlayer = gameRoom["player" + attackedPlayerNo];
       attackedPlayer.castleHealth -= damage;
 
-      // Check to see if the game is over
-      // Otherwise emit new castleHealth
       io.to(gameRoom.roomId).emit("damageCastle", {
         playerNo: attackedPlayer.playerNo,
         castleHealth: attackedPlayer.castleHealth
       });
+
+      // Check to see if the game is over
+      // Otherwise emit new castleHealth
       if (attackedPlayer.castleHealth <= 0) {
         const winningPlayer = 3 - attackedPlayerNo;
-        gameState.endGame(gameRoom, winningPlayer);
-        io.to(gameRoom.roomId).emit("endGame", winningPlayer);
-        clearInterval(gameRoom.interval)
+        io.to(gameRoom.roomId).emit("endGame", { winningPlayer });
+
+        if (gameRoom.roomName === 'debug') {
+          gameState.resetDebugRoom();
+        } // else persist to db/delete game room
+        else {
+          gameRoom.player1 = null;
+          gameRoom.player2 = null;
+        }
       }
     });
 
-    socket.on("damageUnit", ({ attackerId, defenderId }) => {
+    socket.on("damageUnit", ({ unitType, attackedUnitId }) => {
       // Get latest game room
       const gameRoom = getLatestRoom(socket.rooms);
       if (!gameRoom) {
@@ -247,21 +281,11 @@ module.exports = io => {
       // remove unit if it's health is 0 or less
     });
 
-    socket.on("restart", () => {
-      // Get latest game room
-      const gameRoom = getLatestRoom(socket.rooms);
-      if (!gameRoom) {
-        socket.emit("match not found");
-        console.log("room not found");
-        return;
-      }
-    });
-
     socket.on("leave", () => {
       // Remove every instance of the client in gameState
       // Client could be a player or a spectator
-      gameState.destroyPlayer(socket.id);
-      gameState.destorySpectator(socket.id);
+      // gameState.destroyPlayer(socket.id);
+      // gameState.destorySpectator(socket.id);
 
       const roomNames = getAllGameRoomIds(socket.rooms);
       roomNames.forEach(roomName => {
@@ -270,6 +294,21 @@ module.exports = io => {
 
         // Destroy gameRoom if there are no players left;
       });
+    });
+
+    socket.on("disconnect", () => {
+      const roomIds = getAllGameRoomIds(socket.rooms);
+      roomIds.forEach(roomId => {
+        socket.leave(roomId);
+        const gameRoom = gameState.getRoomByRoomId(roomId);
+        if (gameRoom.roomName === 'debug') {
+          gameState.resetDebugRoom();
+        }
+
+        // Destroy gameRoom if there are no players left;
+      });
+      
+      console.log(`Connection ${socket.id} has left the building`);
     });
   });
 };
