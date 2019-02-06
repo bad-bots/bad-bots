@@ -61,6 +61,11 @@ class MemDB {
     this.debugAIRoom = this.createGameRoom('debugAI', 'debugAI');
   }
 
+  resetDebugRoom() {
+    this.Room.findAndRemove({roomId: this.debugRoom.roomId});
+    this.debugRoom = this.createGameRoom('debug', 'debug');
+  }
+
   // Room Methods
   getRoomId(roomName) {
     let roomId;
@@ -162,7 +167,7 @@ class MemDB {
 
   endGame(gameRoom, playerNo) {
     gameRoom.gameStatus = "finished";
-    gameRoom.winner = gameRoom.winner = playerNo
+    gameRoom.winner = playerNo
   }
 
   destroyGame(roomId) {
